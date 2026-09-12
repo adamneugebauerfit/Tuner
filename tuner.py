@@ -2,6 +2,7 @@ import sounddevice as sd
 import numpy
 import dsp
 import config
+import tones
 
 
 def main():
@@ -34,6 +35,8 @@ def main():
             hps = dsp.filtering_nonharmonic_frequencies(magnitude)
 
             peak_freq = dsp.find_exact_frequency(magnitude, hps, low_bin)
+
+            tone, cents = tones.match_freq_to_tone(peak_freq)
 
             print(f"Freq: {peak_freq:6.3f} Hz", end="\r")
 
