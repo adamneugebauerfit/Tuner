@@ -111,6 +111,7 @@ def find_exact_frequency(magnitude_spectrum: numpy.ndarray,
     denominator = a - (2 * b) + c
     if denominator != 0:
         offset = 0.5 * (a - c) / denominator
+        offset = max(-0.5, min(0.5, offset))
     else:
         offset = 0
 

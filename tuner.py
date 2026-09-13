@@ -38,7 +38,20 @@ def main():
 
             tone, cents = tones.match_freq_to_tone(peak_freq)
 
-            print(f"Freq: {peak_freq:6.3f} Hz", end="\r")
+            cent_meter = f"..........{tone}.........."
+            if cents / 5 < 0.5 and cents / 5 > -0.5 :
+                cent_meter = f"=========={tone}==========" # 0 - 21
+            elif cents < -0.5:
+                position = round(cents / 5 + 10)
+                cent_meter = cent_meter[:position] + "|" + cent_meter[position+1:]
+
+            else:
+                position = round(cents / 5 + 10 + len(tone) - 1)
+                cent_meter = cent_meter[:position] + "|" + cent_meter[position+1:]
+
+                
+
+            print(f"{cent_meter} Freq: {peak_freq:8.3f} Hz ", end="\r")
 
         
 if __name__ == '__main__':
