@@ -17,11 +17,6 @@ EPS = 1e-12
 #Measured room noise peaks at around 0.005
 RMS_GATE = 0.01
 
-
-
-#Frequency of a C0 tone in Hz
-C0 = 16.352
-
 notes = {
     "C":    16.352,
     "C#":   17.324,
