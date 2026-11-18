@@ -1,6 +1,8 @@
 BLOCK = 4096
+FFT_SIZE = BLOCK * 4
 
-SAMPLE_RATE = 15000
+
+SAMPLE_RATE = 16000
 
 #How many matches must the harmonic product spectrum hit
 #Lower than 4 might result in unwanted behaviour in some frequencies

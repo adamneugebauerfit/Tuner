@@ -44,7 +44,7 @@ def get_magnitude_spectrum(data: numpy.ndarray) -> numpy.ndarray:
     In complex_spectrum that value is represented by a complex number.
     In magnitude_spectrum the same value is represented by a real number
     """
-    complex_spectrum = numpy.fft.rfft(data)
+    complex_spectrum = numpy.fft.rfft(data, config.FFT_SIZE)
     magnitude_spectrum = numpy.abs(complex_spectrum)
 
     return magnitude_spectrum
@@ -115,6 +115,6 @@ def find_exact_frequency(magnitude_spectrum: numpy.ndarray,
     else:
         offset = 0
 
-    peak_frequency = (peak_bin + offset) * config.SAMPLE_RATE / config.BLOCK
+    peak_frequency = (peak_bin + offset) * config.SAMPLE_RATE / config.FFT_SIZE
 
     return peak_frequency

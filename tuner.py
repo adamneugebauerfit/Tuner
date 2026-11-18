@@ -9,7 +9,7 @@ def main():
 
     hanning_window = numpy.hanning(config.BLOCK)
 
-    low_bin = int(config.LOWEST_FREQ * config.BLOCK / config.SAMPLE_RATE)
+    low_bin = int(config.LOWEST_FREQ * config.FFT_SIZE / config.SAMPLE_RATE)
 
 
     with sd.InputStream(samplerate=config.SAMPLE_RATE, channels=1, dtype="float32", blocksize=config.BLOCK) as stream:
