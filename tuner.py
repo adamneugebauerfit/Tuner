@@ -6,7 +6,8 @@ import tones
 
 
 def main():
-    print("Start tuning by playing a string or a tone", end="\r")
+    start_message = "Start tuning by playing a string or a tone"
+    print(start_message, end="\r")
 
     hanning_window = numpy.hanning(config.BLOCK)
 
@@ -54,7 +55,10 @@ def main():
 
                 
 
-            print(f"{cent_meter} Freq: {peak_freq:8.3f} Hz ", end="\r")
+            #padded with spaces to the length of start_message,
+            #otherwise its end would stay visible after the first result
+            result = f"{cent_meter} Freq: {peak_freq:8.3f} Hz "
+            print(result.ljust(len(start_message)), end="\r")
 
         
 if __name__ == '__main__':
