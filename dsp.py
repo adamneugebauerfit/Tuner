@@ -44,7 +44,7 @@ def get_magnitude_spectrum(data: numpy.ndarray) -> numpy.ndarray:
     In complex_spectrum that value is represented by a complex number.
     In magnitude_spectrum the same value is represented by a real number
     """
-    complex_spectrum = numpy.fft.rfft(data)
+    complex_spectrum = numpy.fft.rfft(data, config.FFT_SIZE)
     magnitude_spectrum = numpy.abs(complex_spectrum)
 
     return magnitude_spectrum
@@ -53,28 +53,36 @@ def get_magnitude_spectrum(data: numpy.ndarray) -> numpy.ndarray:
 def filtering_nonharmonic_frequencies(magnitude_spectrum: numpy.ndarray) -> numpy.ndarray:
     """
     :param magnitude_spectrum: contains the whole frequencies spectrum
-    :return: a shortened list where each frequency is scored by how well its harmonics back it up
+    :return: log scores, one per candidate bin from 0 up to len(magnitude_spectrum) // HPS_ACCURACY
 
-    Because the loudest frequency is not always the right one.\n
-    For example the low E on a typical guitar is 82.0 Hz but this is not the
-    only frequency that is being played and its multiples are registered too
-    such as 164, 246, 328 ... Hz.\n
-    Using HPS we can filter out the unwanted frequencies.\n
-    HPS stands for harmonic product spectrum which is exactly what this function returns.\n
-    We find these harmonic products by copying the beginning of the magnitude_spectrum to a new list,
-    extracting every "d"th element from the magnitude_spectrum, and multiplying the new list by it
-    as many times as we want (HPS_ACCURACY).\n
-    This ensures that any zero in the process kills the whole frequency, because a missing
-    harmonic means it is not the real note.\n
+    HPS stands for harmonic product spectrum (spektrum alikvotnich tonu (got that from prof. Cernocky :) ))
+    which is what this returns.
+    For example: when you play the guitar's second string B3, its frequency is 246.94 Hz (f).
+    However, f is not the only frequency played. Along with f its harmonic products consisting of
+    2*f, 3*f, 4*f, ... are also played.
 
+    For every candidate bin (k) we look at bins 2*k, 3*k,...up to HPS_ACCURACY*k.
+    The real harmonic rarely lands exactly on d*k (f sits between bins, and strings play
+    higher harmonics slightly sharp), so we take the biggest value within "radius" bins of d*k.
+    Each candidate's score is the sum of the logs of these values.
+    A missing harmonic gives a huge negative log, which kills that candidate.
     """
+    n = len(magnitude_spectrum) // config.HPS_ACCURACY
+    score = numpy.log(magnitude_spectrum[:n] + config.EPS)
 
-    hps = magnitude_spectrum[:len(magnitude_spectrum) // config.HPS_ACCURACY].copy()
+    for candidate_bin in range(n):
+        for harmonic in range(2, config.HPS_ACCURACY + 1):
+            radius = (harmonic + 1) // 2
+            harmonic_bin = harmonic * candidate_bin
 
-    for d in range(2, config.HPS_ACCURACY + 1):
-        hps *= magnitude_spectrum[::d][:len(hps)]
+            #biggest value within radius bins of harmonic_bin
+            start = max(harmonic_bin - radius, 0)
+            end = min(harmonic_bin + radius + 1, len(magnitude_spectrum))
+            strongest = magnitude_spectrum[start:end].max()
 
-    return hps
+            score[candidate_bin] += numpy.log(strongest + config.EPS)
+
+    return score
 
     
 def find_exact_frequency(magnitude_spectrum: numpy.ndarray,
@@ -104,6 +112,13 @@ def find_exact_frequency(magnitude_spectrum: numpy.ndarray,
     #the index of 120Hz bin
     peak_bin = lowest_possible_bin + numpy.argmax(hps_list[lowest_possible_bin:])
 
+    #string harmonics are slightly sharp, which pulls the HPS peak_bin
+    #a few bins above the real peak, so we move peak_bin to the biggest
+    #magnitude_spectrum value nearby, otherwise the interpolation is off
+    search_radius = 6
+    window = magnitude_spectrum[peak_bin - search_radius : peak_bin + search_radius + 1]
+    peak_bin = peak_bin - search_radius + numpy.argmax(window)
+
     a = numpy.log(magnitude_spectrum[peak_bin - 1] + config.EPS)
     b = numpy.log(magnitude_spectrum[peak_bin] + config.EPS)
     c = numpy.log(magnitude_spectrum[peak_bin + 1] + config.EPS)
@@ -115,6 +130,6 @@ def find_exact_frequency(magnitude_spectrum: numpy.ndarray,
     else:
         offset = 0
 
-    peak_frequency = (peak_bin + offset) * config.SAMPLE_RATE / config.BLOCK
+    peak_frequency = (peak_bin + offset) * config.SAMPLE_RATE / config.FFT_SIZE
 
     return peak_frequency

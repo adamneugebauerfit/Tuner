@@ -6,16 +6,18 @@ import tones
 
 
 def main():
+    print("Start tuning by playing a string or a tone", end="\r")
 
     hanning_window = numpy.hanning(config.BLOCK)
 
-    low_bin = int(config.LOWEST_FREQ * config.BLOCK / config.SAMPLE_RATE)
+    low_bin = int(config.LOWEST_FREQ * config.FFT_SIZE / config.SAMPLE_RATE)
 
 
     with sd.InputStream(samplerate=config.SAMPLE_RATE, channels=1, dtype="float32", blocksize=config.BLOCK) as stream:
 
         #Program loop
         while True:
+            
             stream_data, _ = stream.read(config.BLOCK)
 
             #since we work with mono audio, second column of data
@@ -39,8 +41,9 @@ def main():
             tone, cents = tones.match_freq_to_tone(peak_freq)
 
             cent_meter = f"..........{tone}.........."
-            if cents / 5 < 0.5 and cents / 5 > -0.5 :
+            if 0.5 > cents / 5 > -0.5:
                 cent_meter = f"=========={tone}==========" # 0 - 21
+                
             elif cents < -0.5:
                 position = round(cents / 5 + 10)
                 cent_meter = cent_meter[:position] + "|" + cent_meter[position+1:]

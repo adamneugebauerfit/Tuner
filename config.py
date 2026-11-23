@@ -1,6 +1,8 @@
 BLOCK = 4096
+FFT_SIZE = BLOCK * 4
 
-SAMPLE_RATE = 15000
+
+SAMPLE_RATE = 16000
 
 #How many matches must the harmonic product spectrum hit
 #Lower than 4 might result in unwanted behaviour in some frequencies
@@ -17,6 +19,7 @@ EPS = 1e-12
 #Measured room noise peaks at around 0.005
 RMS_GATE = 0.01
 
+#for now Hardcoded base frequencies for A4=440Hz
 notes = {
     "C":    16.352,
     "C#":   17.324,
