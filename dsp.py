@@ -112,8 +112,12 @@ def find_exact_frequency(magnitude_spectrum: numpy.ndarray,
     #the index of 120Hz bin
     peak_bin = lowest_possible_bin + numpy.argmax(hps_list[lowest_possible_bin:])
 
-    window = magnitude_spectrum[peak_bin - 3 : peak_bin + 4]
-    peak_bin = peak_bin - 3 + numpy.argmax(window)
+    #string harmonics are slightly sharp, which pulls the HPS peak_bin
+    #a few bins above the real peak, so we move peak_bin to the biggest
+    #magnitude_spectrum value nearby, otherwise the interpolation is off
+    search_radius = 6
+    window = magnitude_spectrum[peak_bin - search_radius : peak_bin + search_radius + 1]
+    peak_bin = peak_bin - search_radius + numpy.argmax(window)
 
     a = numpy.log(magnitude_spectrum[peak_bin - 1] + config.EPS)
     b = numpy.log(magnitude_spectrum[peak_bin] + config.EPS)
