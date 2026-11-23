@@ -68,13 +68,19 @@ def filtering_nonharmonic_frequencies(magnitude_spectrum: numpy.ndarray) -> nump
     A missing harmonic gives a huge negative log, which kills that candidate.
     """
     n = len(magnitude_spectrum) // config.HPS_ACCURACY
-    k = numpy.arange(n)
     score = numpy.log(magnitude_spectrum[:n] + config.EPS)
-    for d in range(2, config.HPS_ACCURACY + 1):
-        radius = (d + 1) // 2
-        idx = d * k[:, None] + numpy.arange(-radius, radius + 1)[None, :]
-        idx = numpy.clip(idx, 0, len(magnitude_spectrum) - 1)
-        score += numpy.log(magnitude_spectrum[idx].max(axis=1) + config.EPS)
+
+    for candidate_bin in range(n):
+        for harmonic in range(2, config.HPS_ACCURACY + 1):
+            radius = (harmonic + 1) // 2
+            harmonic_bin = harmonic * candidate_bin
+
+            #biggest value within radius bins of harmonic_bin
+            start = max(harmonic_bin - radius, 0)
+            end = min(harmonic_bin + radius + 1, len(magnitude_spectrum))
+            strongest = magnitude_spectrum[start:end].max()
+
+            score[candidate_bin] += numpy.log(strongest + config.EPS)
 
     return score
 
