@@ -42,7 +42,9 @@ Python 3.9 or newer is required.
 
 Play a note and watch the line update. Press `Ctrl+C` to stop.
 
-If nothing shows up, the input is probably too quiet, see `RMS_GATE` below.
+Until something loud enough is played, the line says
+`Start tuning by playing a string or a tone`.
+If it stays there, the input is probably too quiet, see `RMS_GATE` below.
 
 
 ## Reading the cent meter
@@ -73,14 +75,23 @@ sends it through these steps:
    where the end of the block loops back to the start.
 3. `dsp.get_magnitude_spectrum` - Turns the audio into a spectrum using
    FFT, where each bin is a frequency and its value is how much of
-   that frequency is in the block.
+   that frequency is in the block.\
+   Before the FFT the block is padded with zeros up to `FFT_SIZE`, which
+   puts the bins closer together (≈ 0.98 Hz apart instead of ≈ 3.9 Hz).
+   It does not add any new information, it just samples the spectrum more finely.
 4. `dsp.filtering_nonharmonic_frequencies` - Because the loudest frequency
    is not always the note being played, Harmonic Product Spectrum (HPS)
    scores each frequency by how well its harmonics (2x, 3x, 4x ...)
-   back it up. The real note has all of them, the fake ones do not.
-5. `dsp.find_exact_frequency` - Because the real frequency usually sits
-   between two bins, we fit a parabola through the peak and its two
-   neighbours (in log space) to find exactly where it is.
+   back it up. The real note has all of them, the fake ones do not.\
+   Real harmonics rarely land exactly on 2x, 3x ..., so it takes the
+   biggest value a few bins around each of them.
+5. `dsp.find_exact_frequency` - Takes the frequency with the best HPS score.
+   String harmonics are slightly sharp, which can pull that score a few bins
+   above the real peak, so we first move to the strongest bin of the spectrum
+   within 6 bins around it.\
+   Then, because the real frequency usually sits between two bins, we fit
+   a parabola through the peak and its two neighbours (in log space) to find
+   exactly where it is.
 6. `tones.match_freq_to_tone` - Turns the frequency into the closest
    note name, its octave and how many cents it is off by.
 
@@ -91,19 +102,20 @@ The whole explanation of each step is in the docstring of its function.
 
 All the settings live in `config.py`.
 
-| Name           | Default | What it does                                                                           |
-|----------------|---------|----------------------------------------------------------------------------------------|
-| `BLOCK`        | `4096`  | How many samples are read at once. Bigger is more precise, but slower to react         |
-| `SAMPLE_RATE`  | `15000` | Samples per second taken from the microphone                                           |
-| `HPS_ACCURACY` | `6`     | How many harmonics must back up a frequency. Lower than 4 might misbehave              |
-| `LOWEST_FREQ`  | `70`    | Anything below this (in Hz) is ignored, otherwise low unwanted frequencies get in the way |
-| `EPS`          | `1e-12` | Tiny number added to avoid `log(0)` errors                                             |
-| `RMS_GATE`     | `0.01`  | Loudness below which nothing is considered played. Room noise peaks around `0.005`     |
-| `notes`        |         | Frequencies of all 12 notes in octave 0, every other octave is calculated from these  |
+| Name           | Default     | What it does                                                                              |
+|----------------|-------------|-------------------------------------------------------------------------------------------|
+| `BLOCK`        | `4096`      | How many samples are read at once. Bigger is more precise, but slower to react            |
+| `FFT_SIZE`     | `BLOCK * 4` | Size the block is padded to with zeros before the FFT, makes the bins closer together     |
+| `SAMPLE_RATE`  | `16000`     | Samples per second taken from the microphone                                              |
+| `HPS_ACCURACY` | `6`         | How many harmonics must back up a frequency. Lower than 4 might misbehave                 |
+| `LOWEST_FREQ`  | `70`        | Anything below this (in Hz) is ignored, otherwise low unwanted frequencies get in the way |
+| `EPS`          | `1e-12`     | Tiny number added to avoid `log(0)` errors                                                |
+| `RMS_GATE`     | `0.01`      | Loudness below which nothing is considered played. Room noise peaks around `0.005`        |
+| `notes`        |             | Frequencies of all 12 notes in octave 0, every other octave is calculated from these      |
 
-With the default values the tuner hears roughly from 70 Hz up to about 1250 Hz,
+With the default values the tuner hears roughly from 70 Hz up to about 1330 Hz,
 because HPS only keeps the bottom `1 / HPS_ACCURACY` part of the spectrum.\
-One FFT bin is `SAMPLE_RATE / BLOCK` ≈ 3.66 Hz wide.
+Bins are `SAMPLE_RATE / FFT_SIZE` ≈ 0.98 Hz apart.
 
 
 ## Files
