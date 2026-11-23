@@ -19,6 +19,7 @@ EPS = 1e-12
 #Measured room noise peaks at around 0.005
 RMS_GATE = 0.01
 
+#for now Hardcoded base frequencies for A4=440Hz
 notes = {
     "C":    16.352,
     "C#":   17.324,
