@@ -6,6 +6,7 @@ import tones
 
 
 def main():
+    print("Start tuning by playing a string or a tone", end="\r")
 
     hanning_window = numpy.hanning(config.BLOCK)
 
@@ -16,6 +17,7 @@ def main():
 
         #Program loop
         while True:
+            
             stream_data, _ = stream.read(config.BLOCK)
 
             #since we work with mono audio, second column of data
@@ -41,6 +43,7 @@ def main():
             cent_meter = f"..........{tone}.........."
             if 0.5 > cents / 5 > -0.5:
                 cent_meter = f"=========={tone}==========" # 0 - 21
+                
             elif cents < -0.5:
                 position = round(cents / 5 + 10)
                 cent_meter = cent_meter[:position] + "|" + cent_meter[position+1:]
